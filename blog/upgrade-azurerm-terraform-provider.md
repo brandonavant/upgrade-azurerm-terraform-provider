@@ -1,6 +1,8 @@
-# Effortless Migration: Upgrading Azure Resource Definitions with Terraform AzureRM 3.x
+# Effortless Terraform Migration: Upgrading Azure Resource Definitions to Terraform AzureRM 3.x
 
 When you install your Azure infrastructure using Terraform, there are instances in which it is imperative that you migrate soon-to-be-obsolete resource definitions over to the up-to-date versions. 
+
+For example,
 
 In this article, I will illustrate (using one of the most classic examples) how to upgrade your resource definitions and state file in such a way where you won't have to do a complete tear-down and re-build of your infrastructure.
 
@@ -53,7 +55,10 @@ TODO: Fill this out
 
 As you can see, there are warnings for each of the deprecated resource definitions. These are the resource definitions that will need to be updated. To help document things, and prepare you plan for your migration, I recommend making a table similar to the following:
 
-
+| Resource Name | Old Resource Definition | New Resource Definition |
+| ------------- | ----------------------- | ----------------------- |
+|               |                         |                         |
+|               |                         |                         |
 
 # The Migration
 
