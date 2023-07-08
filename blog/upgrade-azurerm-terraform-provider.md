@@ -14,17 +14,17 @@ Before we get started, there are a few prerequisites:
 
 # Setup
 
-Prior to jumping into the actual migration, there are a few things we should ensure are in place.
+Prior to jumping into the actual migration, there is a bit of setup work that we should lead with.
 
 ## Environment Variables
 
-> Note: You can skip this step if you prefer to use your `az login` provided authentication.
+> Note: You can skip this step if you prefer to use your `az login`-provided authentication.
 
-Although we *could* perform an `az login` to authenticate the subsequent `terraform` commands; however, I prefer to simulate how things will run when a build agent runs the deployments using the service principal's credentials. This allows me to catch any potential issues that might occur when the agent runs prior to having it perform the final `terraform apply`.
+We *could* perform an `az login` to authenticate the subsequent `terraform` commands; however, I prefer to simulate how things will run when a deployment agent runs, using the service principal's credentials. This allows us to catch any potential issues that might occur when the agent runs in production.
 
-That said, let's setup the appropriate environment variables.
+All that said, let's setup the appropriate environment variables.
 
-First, perform an `az logout` to logout of *your* credentials. Next, add the following environment variables to the corresponding location for your operating system. I am using Ubuntu, so I would do a `vim ~/.bashrc` and add the following:
+First, perform an `az logout` to log out of *your* credentials. Next, add the following environment variables to the corresponding location for your operating system. I am using macOS, so I would do a `vim ~/.zshrc` and add the following:
 
 ```bash
 export ARM_CLIENT_ID="<service-principal-client-id>"
@@ -34,6 +34,26 @@ export ARM_TENANT_ID="<your-tenant-id>"
 ```
 
 ## Determine which resources need migrating
+
+Prior to actually performing the migration, we will need to determine *which* resources actually need to be migrated. Luckily, the Terraform CLI will aid us in making such a determination.
+
+> Reminder: Please ensure that your Terraform CLI is using the most up-to-date version. Using an old version of the CLI may not provide the feedback describe below.
+
+Using the Terraform CLI, run a plan in the directory where your terraform scripts reside:
+
+```bash
+terraform plan
+```
+
+This *should* present you with feedback similar to the following:
+
+```bash
+TODO: Fill this out
+```
+
+As you can see, there are warnings for each of the deprecated resource definitions. These are the resource definitions that will need to be updated. To help document things, and prepare you plan for your migration, I recommend making a table similar to the following:
+
+
 
 # The Migration
 

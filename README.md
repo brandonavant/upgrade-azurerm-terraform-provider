@@ -1,10 +1,10 @@
 # How to upgrade the AzureRM Terraform provider
 
-This repository is intended as an accompaniment to my [LinkedIn article](TODO), which discusses the steps necessary to perform a major version upgrade (one that includes breaking changes to resource definitions) for infrastructure that uses the `azurerm` provider.
+This repository serves as a companion to my [LinkedIn article](TODO), which discusses the necessary steps for performing a major version upgrade (including breaking changes to resource definitions) for Terraform infrastructure-as-code that utilizes the `azurerm` provider.
 
-The contents of the sub-directories are as follows:
+The repository's contents are organized as follows:
 
-- `.github/workflows` - This directory contains the build and deployment pipeline for deploying the application when the `src` directory's content changes.
-- `blog` - This directory contains a Markdown representation of the actual LinkedIn article (along with any images used).
-- `infrastructure` - This directory contains two subdirectories, `v2.99` and `v3.x`; the former containing the deprecated version of the infrastruture resource definition and the latter containing the version to which the state shall be upgraded.
-- `src` - This directory contains a REALLY simply NodeJS application, which only provides a means of ensuring our app is up and running before and after our migration.
+- `.github/workflows` - This directory houses the build and deployment pipeline responsible for deploying the application whenever changes are made to the content within the `src` directory.
+- `blog` - This directory contains a Markdown representation of the actual LinkedIn article, including any accompanying images.
+- `infrastructure` - This directory encompasses two subdirectories: `infrastructure/v2.99` and `infrastructure/v3.x`. The former contains the deprecated version of the infrastructure resource definition, while the latter contains the version to which the state will be upgraded.
+- `src` - This directory contains a simple NodeJS application that serves the purpose of ensuring our app is up and running both before and after our migration.
