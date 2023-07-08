@@ -4,10 +4,10 @@ This repository serves as a companion to my [LinkedIn article](TODO), which disc
 
 The repository's contents are organized as follows:
 
-- `.github/workflows` - This directory houses the build and deployment pipeline responsible for deploying the application whenever changes are made to the content within the `src` directory.
-- `blog` - This directory contains a Markdown representation of the actual LinkedIn article, including any accompanying images.
-- `infrastructure` - This directory encompasses two subdirectories: `infrastructure/v2.99` and `infrastructure/v3.x`. The former contains the deprecated version of the infrastructure resource definition, while the latter contains the version to which the state will be upgraded.
-- `src` - This directory contains a simple NodeJS application that serves the purpose of ensuring our app is up and running both before and after our migration.
+- [.github/workflows](/.github/workflows) - This directory houses the build and deployment pipeline responsible for deploying the application whenever changes are made to the content within the `src` directory.
+- [blog](/blog/) - This directory contains a Markdown representation of the actual LinkedIn article, including any accompanying images.
+- [infrastructure](/infrastructure/) - This directory encompasses two subdirectories: [v2.99](/infrastructure/v2.99/) and [v3.x](/infrastructure/v3.x/). The former contains the deprecated version of the infrastructure resource definition, while the latter contains the version to which the state will be upgraded.
+- [src](/src/) - This directory contains a simple NodeJS application that serves the purpose of ensuring our app is up and running both before and after our migration.
 
 ## How to use demo
 
@@ -41,9 +41,9 @@ terraform plan
 
 The feedback from this command should indicate its plan to create the following resources:
 
-- asp-azurerm-upgrade-demo - An App Service Plan which acts as the parent configuration for applications hosted on Azure, in this case that is our demo Node app.
-- app-azurerm-upgrade-demo - An App Service instance which shall host our demo Node application.
-- rg-azurerm-upgrade-demo - A resource group which will house all of the aforentioned resources, allowing us to group them under one unit, which can be easily identified in billing and deleted as a group when necessary.
+- `asp-azurerm-upgrade-demo` - An App Service Plan which acts as the parent configuration for applications hosted on Azure, in this case that is our demo Node app.
+- `app-azurerm-upgrade-demo` - An App Service instance which shall host our demo Node application.
+- `rg-azurerm-upgrade-demo` - A resource group which will house all of the aforentioned resources, allowing us to group them under one unit, which can be easily identified in billing and deleted as a group when necessary.
 
 If you're okay with the outlined plan, run this command:
 
@@ -53,6 +53,10 @@ terraform apply
 
 This command will run the same plan but now present you with the option to actually put it into action. If you agree with the plan, respond to the prompt accordingly.
 
-At this point, we are finished with the setup. You can now proceed with the steps outlined in the [LinkedIn article](TODO). Please use the files in the `infrastructure/v3.x` directory when following along.
+### Deploying the application
+
+In order to have an application running within the Azure App Service instance, you can use the node application found in the [src](/src/) directory. The [workflows](/.github/workflows) directory also contains a GitHub Action definition for deploying the application to Azure. As to keep this demonstration simple and focused, I will no provide details here on how to perform CI/CD to deploy the applications. For an overview, please read the comments found at the top of [azure-webapps-node.yml](/.github/workflows/azure-webapps-node.yml)
+
+At this point, we are finished with the setup. You can now proceed with the steps outlined in the [LinkedIn article](TODO). Please use the files in the [infrastructure/v3.x](/infrastructure/v3.x/) directory when following along.
 
 Happy migrating!
