@@ -19,7 +19,7 @@
 
 on:
   push:
-    paths: [ "src" ]
+    paths: "src"
     branches: [ "main" ]
   workflow_dispatch:
 
