@@ -166,3 +166,7 @@ dist
 
 # Publish Profiles
 *.PublishSettings
+
+# Terraform
+
+.terraform
