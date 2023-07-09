@@ -8,6 +8,8 @@ That particular message is a result of visiting the documentation page for the n
 
 To avoid this problem, it is best to upgrade your resource definitions sooner rather than later. In this article, I am going to show you how!
 
+> Note: If you want to practice the concepts that I've introduced here, I've built a complete demo project (which includes a deployable Node application). You can find the project, all of the ncessary terraform scripts, etc. in my [GitHub repository here](https://github.com/brandonavant/upgrade-azurerm-terraform-provider).
+
 ## Prerequisites
 
 Before we get started, there are a few prerequisites:
@@ -20,26 +22,22 @@ Before we get started, there are a few prerequisites:
 
 Before we can perform the actual migration, we should gain an understanding of what resource definitions were deprecated and must be upgraded. As of the writing of this article, the list is as follows:
 
-> Note: Please consult the [official guide](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/3.0-upgrade-guide) for more information and a potentially more up-to-date list.
+- **azurerm_app_service_active_slot** is replaced by **azurerm_function_app_active_slot** for both Linux and Windows based Function Apps.
+- **azurerm_app_service_hybrid_connection** is replaced by **azurerm_function_app_hybrid_connection** for Hybrid Connections on Linux and Windows based Web Apps.
+- **azurerm_function_app** is replaced by **azurerm_linux_function_app** for Linux-based Function Apps.
+- **azurerm_function_app_slot** is replaced by **azurerm_linux_function_app_slot** for Deployment Slots on Linux-based Function Apps.
+- **azurerm_app_service** is replaced by **azurerm_linux_web_app** for Linux-based Web Apps.
+- **azurerm_app_service_slot** is replaced by **azurerm_linux_web_app_slot** for Deployment Slots on Linux-based Web Apps.
+- **azurerm_app_service_plan** is replaced by **azurerm_service_plan**.
+- **azurerm_app_service_source_control_token** is replaced by **azurerm_source_control_token**.
+- **azurerm_app_service_active_slot** is replaced by **azurerm_web_app_active_slot** for both Linux and Windows based Web Apps.
+- **azurerm_app_service_hybrid_connection** is replaced by **azurerm_web_app_hybrid_connection** for Hybrid Connections on Linux and Windows based Web Apps.
+- **azurerm_function_app** is replaced by **azurerm_windows_function_app** for Windows-based Function Apps.
+- **azurerm_function_app_slot** is replaced by **azurerm_windows_function_app_slot** for Deployment Slots on Windows-based Function Apps.
+- **azurerm_app_service** is replaced by **azurerm_windows_web_app** for Windows-based Web Apps.
+- **azurerm_app_service_slot** is replaced by **azurerm_windows_web_app_slot** for Deployment Slots on Windows-based Web Apps.
 
-| Original Resource Type                   | Successor Resource Definition          |
-| ---------------------------------------- | -------------------------------------- |
-| azurerm_app_service_active_slot          | azurerm_function_app_active_slot       |
-| azurerm_app_service_hybrid_connection    | azurerm_function_app_hybrid_connection |
-| azurerm_function_app                     | azurerm_linux_function_app             |
-| azurerm_function_app_slot                | azurerm_linux_function_app_slot        |
-| azurerm_app_service                      | azurerm_linux_web_app                  |
-| azurerm_app_service_slot                 | azurerm_linux_web_app_slot             |
-| azurerm_app_service_plan                 | azurerm_service_plan                   |
-| azurerm_app_service_source_control_token | azurerm_source_control_token           |
-| azurerm_app_service_active_slot          | azurerm_web_app_active_slot            |
-| azurerm_app_service_hybrid_connection    | azurerm_web_app_hybrid_connection      |
-| azurerm_function_app                     | azurerm_windows_function_app           |
-| azurerm_function_app_slot                | azurerm_windows_function_app_slot      |
-| azurerm_app_service                      | azurerm_windows_web_app                |
-| azurerm_app_service_slot                 | azurerm_windows_web_app_slot           |
-
-### Make An Upgrade Inventory
+> Note: Please consult the [official guide](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/3.0-upgrade-guide) for more information and a potentially more up-to-date list.Make An Upgrade Inventory
 
 Now that you understand which resource definitions are affected, you will need to make a record of the fully-qualified Azure Resource Manager IDs for each of the resources that you've deployed into Azure using these deprecated resource definitions. **It is important that you make this list now as it will be more tedious to get this list as we proceed further into the migration steps.**
 
@@ -118,10 +116,3 @@ We are now ready to begin the migration process. Migrating from v2.x to v3.x of 
 4. Updating the state file to map the new resource definitions to the existing infrastructure.
 
 
-
-```bash
-Terraform ID: azurerm_app_service.app
-Azure Resource ID: /subscriptions/<your-subscription-id>/resourceGroups/rg-azurerm-upgrade-demo/providers/Microsoft.Web/sites/app-azurerm-upgrade-demo
-```
-
-You will receive that output for each of the resources that you are migrating.
