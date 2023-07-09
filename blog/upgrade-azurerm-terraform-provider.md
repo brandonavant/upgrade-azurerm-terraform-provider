@@ -39,6 +39,8 @@ Before we can perform the actual migration, we should gain an understanding of w
 
 > Note: Please consult the [official guide](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/3.0-upgrade-guide) for more information and a potentially more up-to-date list.Make An Upgrade Inventory
 
+### Creating An Inventory Of Resource Mappings
+
 Now that you understand which resource definitions are affected, you will need to make a record of the fully-qualified Azure Resource Manager IDs for each of the resources that you've deployed into Azure using these deprecated resource definitions. **It is important that you make this list *now* as it will be more tedious to get this list as we proceed further into the migration steps.**
 
 I have prepared a Bash script that will retrieve this list for you. It takes a single parameter, which is the relative path to the directory that contains your Terraform files. For example, `./script.sh ../path/to/terraform/files`.
@@ -264,7 +266,112 @@ Per the documentation, we need to convert this to use `azurerm_service_plan`; li
 
 ![Diff](/Users/programmerx-mbp2/Source/Repos/upgrade-azurerm-terraform-provider/blog/images/diff.png)
 
-Notice that these aren't one-to-one. That said, pay close attention to the [documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/service_plan) and use `terraform validate` to check your work. You will need to follow these steps for each of the resource definitions that you are updating. 
+Notice that these aren't one-to-one. That said, pay close attention to the [documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/service_plan) and use `terraform validate` to check your work. **You will need to follow these steps for each of the resource definitions that you are updating. **
 
 Unfortunately, I can't exhaustively cover all of the possibilities here, so again, it's super important to lean on the documentation.
 
+### Migrating The State
+
+Now that we've performed the updates for **all** of the deprecated Terraform resource definitions, let's try running a `terraform plan`. Here are our results:
+
+```bash
+...
+Plan: 2 to add, 0 to change, 2 to destroy.
+...
+```
+
+> Note: I only had two resources being migrated. You might have more.
+
+According to the plan, all of the infrastructure relative to the migrated resource definitions is being destroyed and recreated. Uh, oh. What's wrong? We can start to answer our question by running the following command:
+
+```bash
+terraform state list
+```
+
+We will receive output similar to the following:
+
+```bash
+azurerm_app_service.app
+azurerm_app_service_plan.plan
+azurerm_resource_group.rg
+```
+
+Notice that `azurerm_app_service.app` and `azurerm_app_service_plan.plan` are using the *old* resource definition names. When Terraform sees this in the state and no corresponding resource definition (because we replaced each of them with their successor), it tries to remove them and subsequently add what it considers as a "new" set of resources.
+
+The reason for this is that our state has no understanding of the new resource definitions.
+
+We can fix this by changing the mappings in the state file to use our new resource ids and map them to the existing Azure Resource Manager IDs. This is the reason why we [previously inventoried the corresponding ARM IDs](#creating-an-inventory-of-resource-mappings).
+
+We must remove the *old* resouce from the state. So, for example, to remove our deprecated `azurerm_app_service_plan.plan` and replace it with the successor `azurerm_service_plan.plan`, we run this command (which removes it from state):
+
+```bash
+terraform state rm azurerm_app_service_plan.plan
+```
+
+You will receive output indicating that it was removed:
+
+```bash
+Removed azurerm_app_service_plan.plan
+Successfully removed 1 resource instance(s).
+```
+
+Next, add its replacement to the state:
+
+```bash
+terraform import azurerm_service_plan.plan /subscriptions/<subscription-id>/resourceGroups/rg-azurerm-upgrade-demo/providers/Microsoft.Web/serverfarms/asp-azurerm-upgrade-demo
+```
+
+You will receive output similar to the following:
+
+```bash
+
+azurerm_service_plan.plan: Importing from ID "/subscriptions/<subscription-id>/resourceGroups/rg-azurerm-upgrade-demo/providers/Microsoft.Web/serverfarms/asp-azurerm-upgrade-demo"...
+azurerm_service_plan.plan: Import prepared!
+Prepared azurerm_service_plan for import
+azurerm_service_plan.plan: Refreshing state... [id=/subscriptions/<subscription-id>/resourceGroups/rg-azurerm-upgrade-demo/providers/Microsoft.Web/serverfarms/asp-azurerm-upgrade-demo]
+
+Import successful!
+
+The resources that were imported are shown above. These resources are now in
+your Terraform state and will henceforth be managed by Terraform.
+```
+
+Perform this for **all** of the resources that you replaced and then run a `terraform plan`. The results of the plan varies based on the significance of differences between the deprecated resource definition and its successor; however, there shouldn't be any unreasonable differences and there should no longer be infrastructure destructions.
+
+For example, if we updated an `azurerm_app_service` to `azurerm_linux_web_app` , the results of a `terraform plan` should be similar to the following:
+
+```bash
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # azurerm_linux_web_app.app will be updated in-place
+  ~ resource "azurerm_linux_web_app" "app" {
+        id                                = "/subscriptions/<subscription-id>/resourceGroups/rg-azurerm-upgrade-demo/providers/Microsoft.Web/sites/app-azurerm-upgrade-demo"
+        name                              = "app-azurerm-upgrade-demo"
+        tags                              = {
+            "createdBy" = "Terraform"
+        }
+        # (19 unchanged attributes hidden)
+
+      ~ site_config {
+          ~ always_on                               = false -> true
+          ~ ftps_state                              = "FtpsOnly" -> "Disabled"
+          ~ use_32_bit_worker                       = false -> true
+            # (19 unchanged attributes hidden)
+
+          ~ application_stack {
+              ~ node_version = "lts" -> "18-lts"
+            }
+        }
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.
+```
+
+Notice that the only changes are in the `site_config` block. You can see that most attributes remain untouched (as indicated by the `(19 unchanged attributes hidden)`). Also, be aware that some of these changes are because of a difference in the default values' differences between the two versions. If you would like to retain the old value, you can explicitly set them in your resource definition.
+
+That's it! We've completed our migration!
+
+I hope you have enjoyed this article. Let me know your thoughts on what I've presented here, as well as what your experiences have been with similar migrations.
