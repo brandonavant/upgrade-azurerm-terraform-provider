@@ -170,3 +170,7 @@ dist
 # Terraform
 
 .terraform
+
+# macOS
+
+.DS_Store
