@@ -1,10 +1,10 @@
-# Effortless Terraform Migration: Upgrading Azure Resource Definitions to Terraform AzureRM 3.x
+# Effortless Terraform Migration: Upgrading Resource Definitions to Version 3.x of the Azure Provider
 
-When navigating the Terraform documentation for AzureRM resource definitions, you may have noticed that some of the resource pages now greet users with messages similar to the following:
+When navigating the Terraform documentation for Azure Provider's resource definitions, you may have noticed that some of the resource pages now greet users with messages similar to the following:
 
-> "This resource has been deprecated in version 3.0 of the AzureRM provider and will be removed in version 4.0. Please use [`azurerm_linux_function_app`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_function_app) and [`azurerm_windows_function_app`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/windows_function_app) resources instead."
+*"This resource has been deprecated in version 3.0 of the AzureRM provider and will be removed in version 4.0. Please use [`azurerm_linux_function_app`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_function_app) and [`azurerm_windows_function_app`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/windows_function_app) resources instead."*
 
-That particular message is a result of visiting the documentation page for the now-deprecated [azurerm_function_app](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/function_app) resource. Well, what exactly does this mean? It means a few different things, the most important of which is that starting in version 4.0 of AzureRM, that resource definition (and several others) will cease to exist. This will block you and your team from being able to use newer versions of the provider, which can cause problems in organizations' development cycles.
+That particular message is a result of visiting the documentation page for the now-deprecated [azurerm_function_app](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/function_app) resource. Well, what exactly does this mean? It means a few different things, the most important of which is that starting in version 4.0 of the Azure Provider, that resource definition (and several others) will cease to exist. This will block you and your team from being able to use newer versions of the provider, which can cause problems in organizations' development cycles.
 
 To avoid this problem, it is best to upgrade your resource definitions sooner rather than later. In this article, I am going to show you how!
 
@@ -41,7 +41,7 @@ Before we can perform the actual migration, we should gain an understanding of w
 
 ### Creating an Inventory of Resource Mappings
 
-Now that you understand which resource definitions are affected, you will need to make a record of the fully-qualified Azure Resource Manager IDs for each of the resources that you've deployed into Azure using these deprecated resource definitions. **It is important that you make this list *now* as it will be more tedious to get this list as we proceed further into the migration steps.**
+Now that you understand which resource definitions are affected, you will need to make a record of the fully-qualified Azure Resource Manager IDs for each of the resources that you've deployed into Azure using these deprecated resource definitions. **It is important that you make this list *now* as it will be more tedious to get this list as we proceed further into the migration steps. You've been warned ;-)**
 
 I have prepared a Bash script that will retrieve this list for you. It takes a single parameter, which is the relative path to the directory that contains your Terraform files. For example, `./script.sh ../path/to/terraform/files`.
 
@@ -108,10 +108,10 @@ Keep a record of all the values that this gives you as you will need them later.
 
 ## Executing The Migration
 
-We are now ready to begin the migration process. Migrating from v2.x to v3.x of the AzureRM provider consists of the following steps:
+We are now ready to begin the migration process. Migrating from v2.x to v3.x of the Azure Provider consists of the following steps:
 
 1. Performing a backup of your state file.
-2. Updating the configuration to point to the newest version of the AzureRM provider and re-initializing the lock file.
+2. Updating the configuration to point to the newest version of the Azure Provider and re-initializing the lock file.
 3. Upgrading each of the deprecated resource definitions.
 4. Updating the state file to map the new resource definitions to the existing infrastructure.
 
@@ -120,6 +120,8 @@ We are now ready to begin the migration process. Migrating from v2.x to v3.x of 
 If there is a problem during the migration process, we might need to roll back our changes. The quickest way to roll back the changes is to restore the state file to the original state. To ensure that this will be possible, we will need to perform a backup.
 
 Going with the assumption that we've stored our state file in an Azure Storage account, we will need to perform the following steps:
+
+> Note: If you used Terraform Cloud or another state management platform. Please follow that platform's state backup and restore strategy.
 
 1. Using the Azure portal, navigate to the Azure Storage account in which the state file is stored.
 
@@ -133,7 +135,7 @@ Going with the assumption that we've stored our state file in an Azure Storage a
 
 ![Snapshot](images/snapshot.png)
 
-4. You should now see a snapshot of your state file. We could then promote this later if we needed to restore the state. That's it!
+4. You should now see a snapshot of your state file. We could then promote this later if we needed to restore the state. The backup is complete.
 
 ### Upgrade Provider
 
@@ -157,7 +159,7 @@ provider "azurerm" {
 }
 ```
 
-Notice the `version = "~> 3.0"`, which simply constrains our version with the 3.x range of provider versions. Now run the following command to update the lock file to match the new version.
+Notice the `version = "~> 3.0"`, which simply constrains our version within the 3.x range of provider versions. Now run the following command to update the lock file to match the new version.
 
 ```bash
 terraform init -upgrade
@@ -180,7 +182,7 @@ If so, that means this step is complete. We can now move on to updating each of 
 
 ### Update Resource Definitions
 
-Now that we've updated the AzureRM provider version, let's run another `terraform plan` to see what it now shows. You *should* see output similar to the following:
+Now that we've updated the Azure Provider's version, let's run another `terraform plan` to see what it now shows. You *should* see output similar to the following:
 
 ```bash
 azurerm_resource_group.rg: Refreshing state... [id=/subscriptions/<subscription-id>/resourceGroups/rg-azurerm-upgrade-demo]
@@ -231,15 +233,17 @@ Next,
 │ (and 3 more similar warnings elsewhere)
 ```
 
-**This** is the portion of the output that is most important to us. What it's telling us is that our current infrastructure components are using deprecated Terraform resource definitions. This is what we expect and what we are fixing.
+*This* is the portion of the output that is most important to us. What it's telling us is that our current infrastructure components are using deprecated Terraform resource definitions. This is what we expect and what we are fixing.
 
 The warnings seem to show one at a time (notice the `(and 3 more similar warnings elsewhere)`) and as we fix one, we can re-run `terraform plan` to see the next warning. We can use this mechanism to double-check our work and ensure that we didn't miss anything when we made our inventory [back in earlier steps](#understanding-what-should-be-upgraded).
 
 Let's keep this in mind as we're executing the next step...
 
-Now, the most tedious part. We must go through *each* of the resource definitions that we identified as deprecated and migrate the resource to the most up-to-date equivalent. While the [Official Upgrade Guide](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/3.0-upgrade-guide) does outline many of the changes (CMD+F / CTRL+F is your friend), I did find in my experiences that the guide did miss some things. It's best to be thorough and visit the documentation for each of the successor resource definitions. Also, your IDE's autocomplete/IntelliSense should help as well.
+Now, the most tedious part. We must go through *each* of the resource definitions that we identified as deprecated and migrate the resource to the most up-to-date equivalent. While the [Official Upgrade Guide](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/3.0-upgrade-guide) *does* outline many of the changes (CMD+F / CTRL+F is your friend), I did find in my experiences that the guide did miss some things. 
 
-> Note: I wasn't a big fan of the experience that I had using the official Terraform plugin (from HashiCorp) for VSCode. I found that the plugin available in the JetBrains IDEs (e.g., Rider) was much more helpful.
+It's best to be thorough and visit the documentation for each of the successor resource definitions. Also, your IDE's autocomplete/IntelliSense should help as well.
+
+> Note: I wasn't a big fan of the experience that I had using the Terraform plugs made available for VSCode. I found that the plugin available in the JetBrains IDEs (e.g., Rider) was much more helpful.
 
 So, for example, consider the deprecated resource definition `azurerm_app_service_plan`. For this, we might have the following:
 
@@ -266,9 +270,7 @@ Per the documentation, we need to convert this to use `azurerm_service_plan`; li
 
 ![Diff](images/diff.png)
 
-Notice that these aren't one-to-one. That said, pay close attention to the [documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/service_plan) and use `terraform validate` to check your work. **You will need to follow these steps for each of the resource definitions that you are updating.**
-
-Unfortunately, I can't exhaustively cover all the possibilities here, so again, it's super important to lean on the documentation.
+Notice that these aren't one-to-one. That said, pay close attention to the [documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/service_plan) and use `terraform validate` to check your work. **You will need to follow these steps for *each* of the resource definitions that you are updating.** Unfortunately, I can't exhaustively cover all the possibilities here, so again, it's super important to lean on the documentation.
 
 ### Migrating The State
 
@@ -280,7 +282,7 @@ Plan: 2 to add, 0 to change, 2 to destroy.
 ...
 ```
 
-> Note: I only had two resources being migrated. You might have more.
+> Note: I only had two resources being migrated. You might have more...
 
 According to the plan, all the infrastructure relative to the migrated resource definitions is being destroyed and recreated. Uh-oh. What's wrong? We can start to answer our question by running the following command:
 
