@@ -1,12 +1,14 @@
 # Effortless Terraform Migration: Upgrading Azure Resource Definitions to Terraform AzureRM 3.x
 
-When you install your Azure infrastructure using Terraform, there are instances in which it is imperative that you migrate soon-to-be-obsolete resource definitions over to the up-to-date versions. 
+When navigating the Terraform documentation for AzureRM resource definitions, you may have noticed that some of the resource pages now greet users with messages similar to the following:
 
-For example,
+> *"This resource has been deprecated in version 3.0 of the AzureRM provider and will be removed in version 4.0. Please use [`azurerm_linux_function_app`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_function_app) and [`azurerm_windows_function_app`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/windows_function_app) resources instead."*
 
-In this article, I will illustrate (using one of the most classic examples) how to upgrade your resource definitions and state file in such a way where you won't have to do a complete tear-down and re-build of your infrastructure.
+That particular message is a result of visiting the documentation page for the now deprecated [azurerm_function_app](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/function_app) resource. Well, what exacty does this mean? It means a few different things, most important of which is that starting in version 4.0 of the AzureRM that resource definition (and several others) will cease to exist. This will block you and your team from being able to use newer versions of the provider, which can cause problems in organizations' development cycles.
 
-# Prerequisites
+To avoid this problem, it is best to upgrade your resource definitions sooner rather than later. In this article, I am going to show you how!
+
+## Prerequisites
 
 Before we get started, there are a few prerequisites:
 
@@ -14,59 +16,36 @@ Before we get started, there are a few prerequisites:
 - This article assumes that you have a basic working knowledge of the Terraform CLI, including state file basics (e.g. understanding what `terraform init` does).
 - It is assumed that you already have infrastructure setup in Azure and wish to perform a provider upgrade. That said, I will not be covering the specifics of how to get infrastructure deployed to Azure.
 
-# Setup
+## Understanding What Should Be Upgraded
 
-Prior to jumping into the actual migration, there is a bit of setup work that we should lead with.
+Before we can perform the actual migration, we should gain an understanding of what resource definitions were deprecated and must be upgraded. As of the writing of this article, the list is as follows:
 
-## Environment Variables
+> Note: Please consult the [official guide](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/3.0-upgrade-guide) for more information and a potentially more up-to-date list.
 
-> Note: You can skip this step if you prefer to use your `az login`-provided authentication.
+| Original Resource Type                   | Successor Resource Definition          |
+| ---------------------------------------- | -------------------------------------- |
+| azurerm_app_service_active_slot          | azurerm_function_app_active_slot       |
+| azurerm_app_service_hybrid_connection    | azurerm_function_app_hybrid_connection |
+| azurerm_function_app                     | azurerm_linux_function_app             |
+| azurerm_function_app_slot                | azurerm_linux_function_app_slot        |
+| azurerm_app_service                      | azurerm_linux_web_app                  |
+| azurerm_app_service_slot                 | azurerm_linux_web_app_slot             |
+| azurerm_app_service_plan                 | azurerm_service_plan                   |
+| azurerm_app_service_source_control_token | azurerm_source_control_token           |
+| azurerm_app_service_active_slot          | azurerm_web_app_active_slot            |
+| azurerm_app_service_hybrid_connection    | azurerm_web_app_hybrid_connection      |
+| azurerm_function_app                     | azurerm_windows_function_app           |
+| azurerm_function_app_slot                | azurerm_windows_function_app_slot      |
+| azurerm_app_service                      | azurerm_windows_web_app                |
+| azurerm_app_service_slot                 | azurerm_windows_web_app_slot           |
 
-We *could* perform an `az login` to authenticate the subsequent `terraform` commands; however, I prefer to simulate how things will run when a deployment agent runs, using the service principal's credentials. This allows us to catch any potential issues that might occur when the agent runs in production.
+### Make An Upgrade Inventory
 
-All that said, let's setup the appropriate environment variables.
+Now that you understand which resource definitions are affected, you will need to make a record of the fully-qualified Azure Resource Manager IDs for each of the resources that you've deployed into Azure using these deprecated resource definitions. **It is important that you make this list now as it will be more tedious to get this list as we proceed further into the migration steps.**
 
-First, perform an `az logout` to log out of *your* credentials. Next, add the following environment variables to the corresponding location for your operating system. I am using macOS, so I would do a `vim ~/.zshrc` and add the following:
+I have prepared a Bash script that will retrieve this list for you:
 
-```bash
-export ARM_CLIENT_ID="<service-principal-client-id>"
-export ARM_CLIENT_SECRET="<service-principal-client-secret>"
-export ARM_SUBSCRIPTION_ID="<subscription-where-infrastructure-is-deployed>"
-export ARM_TENANT_ID="<your-tenant-id>"
-```
-
-## Determine which resources need migrating
-
-Prior to actually performing the migration, we will need to determine *which* resources actually need to be migrated. Luckily, the Terraform CLI will aid us in making such a determination.
-
-> Reminder: Please ensure that your Terraform CLI is using the most up-to-date version. Using an old version of the CLI may not provide the feedback describe below.
-
-Using the Terraform CLI, run a plan in the directory where your terraform scripts reside:
-
-```bash
-terraform plan
-```
-
-This *should* present you with feedback similar to the following:
-
-```bash
-TODO: Fill this out
-```
-
-As you can see, there are warnings for each of the deprecated resource definitions. These are the resource definitions that will need to be updated. To help document things, and prepare you plan for your migration, I recommend making a table similar to the following:
-
-| Resource Name | Old Resource Definition | New Resource Definition |
-| ------------- | ----------------------- | ----------------------- |
-|               |                         |                         |
-|               |                         |                         |
-
-# The Migration
-
-## Get the ARM Resource IDs
-
-Prior to updating our Terraform scripts to use the new resource names, we need make a note of what the Azure Resource Manager IDs are for the existing resources (those already out in Azure). We will need this in subsequent steps.
-
-To do this, we can use the following bash shell script. You will need to run it in the directory in which your `.tf` scripts exist:
+> Note: You may need to install `jq`. On macOS, you can do this by running `brew install jq`.
 
 ```bash
 #!/bin/bash
@@ -79,6 +58,7 @@ fi
 
 cd "$1" # Set the working directory
 
+# Replace the strings in array below with your Terraform resource ids. Separate each string by a space.
 terraform_ids=("azurerm_app_service.app" "azurerm_app_service_plan.plan")
 terraform_show_output=$(terraform show -json)
 
@@ -95,7 +75,49 @@ do
 done
 ```
 
-The output will be similar to the following:
+All that you will need to do to prepare this script is to update the strings in the `terraform_ids` array (found on line 12) with your fully-qualified terraform ids.
+
+For example, consider the following resource definition:
+
+```hcl
+resource "azurerm_app_service" "app" {
+  name                = "app-azurerm-upgrade-demo"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  app_service_plan_id = azurerm_app_service_plan.plan.id
+
+  site_config {
+    linux_fx_version = "NODE|lts"
+  }
+
+  tags = {
+    "createdBy" = "Terraform"
+  }
+}
+```
+
+In this scenario, you would add `azurerm_app_service.app` to the string array (as demonstrated in one of the two placeholder strings in the provided script). After running the script, you should receive a list similar to the following:
+
+```bash
+Terraform ID: azurerm_app_service.app
+Azure Resource ID: /subscriptions/<subscription-id>/resourceGroups/rg-azurerm-upgrade-demo/providers/Microsoft.Web/sites/app-azurerm-upgrade-demo
+-----------------------------------
+Terraform ID: azurerm_app_service_plan.plan
+Azure Resource ID: /subscriptions/<subscription-id>/resourceGroups/rg-azurerm-upgrade-demo/providers/Microsoft.Web/serverfarms/asp-azurerm-upgrade-demo
+```
+
+Keep a record of all of the values that this gives you as you will need them later.
+
+## Executing The Migration
+
+We are now ready to begin the migration process. Migrating from v2.x to v3.x of the AzureRM provider consist of the following steps:
+
+1. Performing a back-up of your state file.
+2. Updating the configuration to point to the newest version of the AzureRM provider and re-initializing the lock file.
+3. Upgrading each of the deprecated resource definition.
+4. Updating the state file to map the new resource definitions to the existing infrastructure.
+
+
 
 ```bash
 Terraform ID: azurerm_app_service.app

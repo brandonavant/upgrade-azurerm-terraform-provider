@@ -8,6 +8,7 @@ fi
 
 cd "$1" # Set the working directory
 
+# Replace the strings in array below with your Terraform resource ids. Separate each string by a space.
 terraform_ids=("azurerm_app_service.app" "azurerm_app_service_plan.plan")
 terraform_show_output=$(terraform show -json)
 
