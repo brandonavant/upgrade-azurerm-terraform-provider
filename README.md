@@ -1,6 +1,6 @@
 # How to Upgrade the AzureRM Terraform Provider
 
-This repository serves as a companion to my [LinkedIn article](TODO), which discusses the necessary steps for performing a major version upgrade (including breaking changes to resource definitions) for Terraform infrastructure-as-code that utilizes the `azurerm` provider.
+This repository serves as a companion to my [LinkedIn Article](https://www.linkedin.com/pulse/effortless-terraform-migration-upgrading-resource-version-avant), which discusses the necessary steps for performing a major version upgrade (including breaking changes to resource definitions) for Terraform infrastructure-as-code that utilizes the `azurerm` provider.
 
 The repository's contents are organized as follows:
 
