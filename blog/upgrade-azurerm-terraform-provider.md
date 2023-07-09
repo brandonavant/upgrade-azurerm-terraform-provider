@@ -123,19 +123,19 @@ Going with the assumption that we've stored our state file in an Azure Storage a
 
 > Note: If you used Terraform Cloud or another state management platform. Please follow that platform's state backup and restore strategy.
 
-1. Using the Azure portal, navigate to the Azure Storage account in which the state file is stored.
+Using the Azure portal, navigate to the Azure Storage account in which the state file is stored.
 
 ![Storage Account](images/storage.png)
 
-2. Next, navigate to the container (e.g., `tfstate`).
+Next, navigate to the container (e.g., `tfstate`).
 
 ![Container](images/container.png)
 
-3. Click the *Snapshots* tab shown on this page and then click *Create Snapshot*.
+Click the *Snapshots* tab shown on this page and then click *Create Snapshot*.
 
 ![Snapshot](images/snapshot.png)
 
-4. You should now see a snapshot of your state file. We could then promote this later if we needed to restore the state. The backup is complete.
+You should now see a snapshot of your state file. We could then promote this later if we needed to restore the state. The backup is complete.
 
 ### Upgrade Provider
 
