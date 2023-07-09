@@ -123,15 +123,15 @@ Going with the assumption that we've stored our state file in an Azure Storage a
 
 1. Using the Azure portal, navigate to the Azure Storage account in which the state file is stored.
 
-![Storage Account](/Users/programmerx-mbp2/Source/Repos/upgrade-azurerm-terraform-provider/blog/images/storage.png)
+![Storage Account](images/storage.png)
 
 2. Next, navigate to the container (e.g., `tfstate`).
 
-![Container](/Users/programmerx-mbp2/Source/Repos/upgrade-azurerm-terraform-provider/blog/images/container.png)
+![Container](images/container.png)
 
 3. Click the *Snapshots* tab shown on this page and then click *Create Snapshot*.
 
-![Snapshot](/Users/programmerx-mbp2/Source/Repos/upgrade-azurerm-terraform-provider/blog/images/snapshot.png)
+![Snapshot](images/snapshot.png)
 
 4. You should now see a snapshot of your state file. We could then promote this later if we needed to restore the state. That's it!
 
@@ -264,7 +264,7 @@ resource "azurerm_app_service_plan" "plan" {
 
 Per the documentation, we need to convert this to use `azurerm_service_plan`; like so:
 
-![Diff](/Users/programmerx-mbp2/Source/Repos/upgrade-azurerm-terraform-provider/blog/images/diff.png)
+![Diff](images/diff.png)
 
 Notice that these aren't one-to-one. That said, pay close attention to the [documentation](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/service_plan) and use `terraform validate` to check your work. **You will need to follow these steps for each of the resource definitions that you are updating.**
 
